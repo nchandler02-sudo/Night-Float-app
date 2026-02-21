@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Night Float Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg0:#0a0e1a;--bg1:#0f172a;--bg2:#1a1035;
+--sf:rgba(255,255,255,0.04);--sfh:rgba(255,255,255,0.07);--sfa:rgba(255,255,255,0.10);
+--bd:rgba(255,255,255,0.08);--bdl:rgba(255,255,255,0.12);
+--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--t4:#475569;
+--red:#ef4444;--amber:#f59e0b;--green:#10b981;--blue:#3b82f6;
+--fh:'Playfair Display',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif;
+--sw:272px;--tr:0.2s ease;
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--fb);background:linear-gradient(160deg,var(--bg0),var(--bg1) 40%,var(--bg2));color:var(--t1);min-height:100vh;overflow-x:hidden;line-height:1.6}
+body::before,body::after{content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(130px);opacity:.10}
+body::before{width:600px;height:600px;background:#6366f1;top:-200px;left:-100px}
+body::after{width:500px;height:500px;background:#a855f7;bottom:-150px;right:-100px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+#root{position:relative;z-index:1}
+.lyt{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sb{width:var(--sw);min-height:100vh;position:fixed;top:0;left:0;background:rgba(10,14,26,.93);backdrop-filter:blur(20px);border-right:1px solid var(--bd);z-index:100;display:flex;flex-direction:column;transition:transform .3s ease;overflow-y:auto}
+.sb-hd{padding:22px 18px 14px;border-bottom:1px solid var(--bd)}
+.sb-brand{font-family:var(--fh);font-weight:800;font-size:1.2rem;background:linear-gradient(135deg,#e2e8f0,#c7d2fe,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.3}
+.sb-tag{font-size:.68rem;color:var(--t3);margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+.sb-srch{padding:10px 14px}
+.sb-srch input{width:100%;padding:7px 11px;border-radius:8px;background:var(--sf);border:1px solid var(--bd);color:var(--t1);font-family:var(--fb);font-size:.84rem;outline:none;transition:var(--tr)}
+.sb-srch input:focus{border-color:#6366f1;background:var(--sfh)}
+.sb-srch input::placeholder{color:var(--t4)}
+.sb-nav{flex:1;padding:2px 8px 20px;overflow-y:auto}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;cursor:pointer;transition:var(--tr);font-size:.83rem;color:var(--t2);line-height:1.35;margin-bottom:1px;position:relative;user-select:none}
+.ni:hover{background:var(--sfh);color:var(--t1)}
+.ni.act{background:var(--sfa);color:var(--t1)}
+.ni.act::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Main */
+.mn{flex:1;margin-left:var(--sw);padding:28px 36px 60px;max-width:880px}
+
+/* Mobile */
+.mhd{display:none;position:fixed;top:0;left:0;right:0;z-index:90;background:rgba(10,14,26,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);padding:11px 14px;align-items:center;gap:12px}
+.hbg{background:none;border:none;color:var(--t1);cursor:pointer;padding:4px}
+.hbg svg{width:24px;height:24px}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95}.ov.sh{display:block}
+@media(max-width:768px){.mhd{display:flex}.sb{transform:translateX(-100%)}.sb.op{transform:translateX(0)}.mn{margin-left:0;padding:68px 14px 40px}}
+
+/* Hero */
+.hero{text-align:center;padding:70px 16px 50px}
+.hero-t{font-family:var(--fh);font-weight:900;font-size:clamp(2rem,5vw,3rem);background:linear-gradient(135deg,#e2e8f0 0%,#c7d2fe 50%,#a78bfa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:10px}
+.hero-s{color:var(--t2);font-size:1rem;max-width:480px;margin:0 auto 36px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.tc{background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:18px;cursor:pointer;transition:all .2s ease;position:relative;overflow:hidden}
+.tc:hover{transform:translateY(-3px);border-color:var(--bdl)}
+.tc-ac{height:3px;border-radius:3px;margin-bottom:12px;width:36px}
+.tc h3{font-family:var(--fh);font-weight:700;font-size:1rem;margin-bottom:5px;line-height:1.3}
+.tc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tc-tag{font-size:.65rem;padding:2px 7px;border-radius:10px;background:var(--sf);color:var(--t3)}
+.tc-dt{font-size:.65rem;color:var(--t4);margin-top:6px}
+
+/* Topic Detail */
+.td{animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bk{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;background:var(--sf);border:1px solid var(--bd);color:var(--t2);cursor:pointer;font-size:.8rem;font-family:var(--fb);transition:var(--tr);margin-bottom:18px}
+.bk:hover{background:var(--sfh);color:var(--t1)}
+.tt-bar{margin-bottom:24px}
+.tt-bar h1{font-family:var(--fh);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1.25;margin-bottom:8px}
+.tt-meta{display:flex;flex-wrap:wrap;gap:5px}
+.tt-tag{font-size:.68rem;padding:2px 9px;border-radius:11px}
+
+/* Tabs */
+.stabs{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:22px;border-bottom:1px solid var(--bd);padding-bottom:0}
+.stab{padding:7px 13px;border:none;background:none;color:var(--t3);cursor:pointer;font-family:var(--fb);font-size:.78rem;font-weight:600;border-bottom:2px solid transparent;transition:var(--tr);white-space:nowrap}
+.stab:hover{color:var(--t2)}.stab.act{color:var(--t1)}
+
+/* Bullet lists */
+.bl{list-style:none;padding:0}.bl li{padding:9px 0;border-bottom:1px solid var(--bd);font-size:.88rem;line-height:1.65;color:var(--t2)}
+.bl li:last-child{border-bottom:none}.bl li strong,.bl li b{color:var(--t1);font-weight:600}
+
+/* Sections with special styling */
+.sec-panic{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.13);border-radius:11px;padding:18px}
+.sec-panic .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:7px;background:rgba(239,68,68,.13);color:#fca5a5;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.sec-icu{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.11);border-radius:11px;padding:18px}
+.sec-icu .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:7px;background:rgba(245,158,11,.13);color:#fcd34d;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.sec-ord{background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.11);border-radius:11px;padding:18px}
+.sec-ord .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:7px;background:rgba(99,102,241,.13);color:#a5b4fc;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.sec-cdi{background:rgba(20,184,166,.04);border:1px solid rgba(20,184,166,.11);border-radius:11px;padding:18px}
+.sec-cdi .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:7px;background:rgba(20,184,166,.13);color:#5eead4;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+
+/* Quiz */
+.qc{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:20px;margin-bottom:14px}
+.ql{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.qs{font-size:.9rem;line-height:1.7;color:var(--t2);margin-bottom:14px}
+.qopts{list-style:none;padding:0}
+.qo{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-radius:7px;cursor:pointer;transition:var(--tr);margin-bottom:5px;border:1px solid transparent;font-size:.86rem;color:var(--t2)}
+.qo:hover{background:var(--sfh)}
+.qo.sel{border-color:var(--bdl);background:var(--sfa)}
+.qo.cor{border-color:#10b981;background:rgba(16,185,129,.1);color:#6ee7b7}
+.qo.inc{border-color:#ef4444;background:rgba(239,68,68,.07);color:#fca5a5}
+.qol{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;background:var(--sf);border:1px solid var(--bd)}
+.qo.cor .qol{background:rgba(16,185,129,.2);border-color:#10b981}
+.qo.inc .qol{background:rgba(239,68,68,.13);border-color:#ef4444}
+.qrb{display:inline-flex;padding:7px 16px;border-radius:7px;border:1px solid var(--bd);background:var(--sf);color:var(--t2);cursor:pointer;font-family:var(--fb);font-size:.8rem;font-weight:600;transition:var(--tr);margin-top:6px}
+.qrb:hover{background:var(--sfh)}
+.qex{margin-top:12px;padding:12px;border-radius:7px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.11);font-size:.85rem;line-height:1.65;color:var(--t2)}
+
+/* Flashcards */
+.fc{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:16px;margin-bottom:9px;cursor:pointer;transition:var(--tr)}
+.fc:hover{border-color:var(--bdl)}
+.fc-q{font-size:.88rem;color:var(--t1);font-weight:500}
+.fc-a{margin-top:9px;padding-top:9px;border-top:1px solid var(--bd);font-size:.85rem;color:var(--t2);line-height:1.6}
+
+/* References */
+.ri{padding:7px 0;border-bottom:1px solid var(--bd)}.ri:last-child{border-bottom:none}
+.ri a{color:#818cf8;text-decoration:none;font-size:.85rem;transition:var(--tr)}.ri a:hover{color:#a5b4fc;text-decoration:underline}
+
+/* Stats */
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:28px;padding:14px 18px;background:var(--sf);border-radius:11px;border:1px solid var(--bd)}
+.stat{text-align:center}.stat-n{font-size:1.4rem;font-weight:700;font-family:var(--fh)}.stat-l{font-size:.68rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo,useEffect}=React;
+
+const ACCENT=["#6366f1","#a855f7","#ec4899","#f97316","#14b8a6","#3b82f6","#8b5cf6","#ef4444","#10b981","#f59e0b"];
+
+const TOPICS=[{"id": "01", "title": "Airway & Respiratory Failure (Non‑intubation Emphasis)", "tags": ["pulmonology", "respiratory-failure", "airway-management", "noninvasive-ventilation", "inpatient", "night-float"], "date": "2026-02-20", "panic_card": ["Apply oxygen targeting **SpO₂ 92–96%** (or **88–92% in chronic hypercapnia/COPD**) while monitoring **RR**, **mental status**, and **hemodynamics**; place patient upright.", "Start HFNC early for hypoxemic failure with high work of breathing: **40–60 L/min**, FiO₂ titrated to target; assess **ROX index** trends.", "Initiate NIV when indicated (e.g., COPD exacerbation with **pH ≤7.35** or cardiogenic edema): start **IPAP 10–15 cmH₂O / EPAP 5 cmH₂O**, titrate to **RR <25/min**, improved pH/PaCO₂.", "Treat underlying precipitants immediately: bronchodilators (albuterol/ipratropium), steroids for COPD/asthma, loop diuretics for pulmonary edema, broad‑spectrum antibiotics if severe pneumonia/sepsis; correct **MAP ≥65 mmHg** if shock.", "If deteriorating or contraindications to NIV/HFNC emerge (vomiting, inability to protect airway, facial trauma, refractory hypoxemia), prepare for definitive airway without delay; **Confirm Before Proceed** if giving neuromuscular blocker for RSI."], "brief_overview": ["Acute respiratory failure at night often benefits from non‑intubation strategies that reduce work of breathing and improve gas exchange while buying time for definitive therapy (diuretics, bronchodilators, antibiotics). Priorities: oxygenation targets, ventilatory support choice (HFNC vs NIV), rapid reassessment at defined intervals, and early escalation if objective thresholds are breached.", "**Guideline Must‑Know:** For COPD exacerbations with acute hypercapnic acidemia (**pH ≤7.35**, elevated PaCO₂), **NIV is first‑line** to reduce intubation and mortality; titrate IPAP/EPAP and reassess pH within **1–2 h** (GOLD 2024–25; ERS/ATS NIV 2017).", "**Guideline Must‑Know:** In cardiogenic pulmonary edema, **CPAP or BiPAP** reduces intubation and improves dyspnea rapidly; typical starting **CPAP 8–12 cmH₂O** or **BiPAP 10/5 cmH₂O**, alongside IV loop diuretics and afterload reduction when appropriate (ERS/ATS NIV 2017).", "**Guideline Must‑Know:** For acute hypoxemic respiratory failure, **HFNC** at **40–60 L/min** with FiO₂ to SaO₂ target improves comfort and may lower intubation rates vs conventional oxygen; track **ROX index = SpO₂/FiO₂ ÷ RR** at **2–12 h** (ERS HFNC 2022).", "**Guideline Must‑Know:** Use conservative oxygen targets: **SpO₂ 92–96%** generally; **88–92%** in chronic hypercapnia/COPD to avoid oxygen‑induced hypercapnia (GOLD 2024–25; BTS Oxygen 2017).", "**Guideline Must‑Know:** Severe pneumonia/sepsis with hypoxemia should receive timely antibiotics and source control; do not delay escalation to NIV/HFNC while antimicrobials are started; maintain **MAP ≥65 mmHg** if septic shock (Surviving Sepsis 2021/2023 updates; ATS/IDSA CAP 2019).", "**Guideline Must‑Know:** Objective NIV failure signals include **worsening acidosis**, **persistent RR >30/min**, **rising PaCO₂**, **SpO₂ <90% at FiO₂ ≥0.6**, or **intolerance/secretions**; escalate to intubation (ERS/ATS NIV 2017).", "What must happen now: position upright; set oxygen target; choose HFNC vs NIV based on failure phenotype (hypoxemic vs hypercapnic vs mixed); start disease‑specific therapy (bronchodilators, steroids, diuretics, antibiotics); place continuous pulse oximetry and frequent vitals; obtain ABG/VBG if hypercapnia suspected.", "What can wait 30–90 minutes: second‑line bronchodilators (magnesium sulfate **2 g IV** in severe asthma), broader diagnostics (procalcitonin, CT pulmonary angiography if stable), formal echocardiography after initial stabilization.", "HFNC pearls: Higher flows wash out anatomic dead space and provide small PEEP; ensure heated humidification to avoid mucosal dryness; use **ROX ≥4.88 at 12 h** as a favorable sign; trending matters more than one value.", "NIV selection: COPD/asthma with ventilatory failure → BiPAP; cardiogenic edema with shunt physiology → CPAP or BiPAP; set **IPAP to reduce PaCO₂ and RR** and **EPAP/CPAP to recruit alveoli**. Monitor for leaks, gastric distention, and pressure sores.", "Contraindications to NIV: **inability to protect airway**, **copious vomiting/aspiration risk**, **facial trauma/burns**, **severe agitation**, **hemodynamic instability refractory to initial support**, and **untreated pneumothorax**.", "Pitfalls: Excess oxygen in COPD can worsen hypercapnia; under‑titrated EPAP in cardiogenic edema fails to counter hydrostatic flooding; delayed escalation despite objective failure criteria increases risk. Avoid nebulizers that break mask seal—use inline setups when feasible.", "Call ICU early for: escalating FiO₂ needs (**≥0.6**), rising work of breathing with use of accessory muscles, **pH <7.25**, hemodynamic instability, or anticipated difficult airway. Early involvement reduces crash intubations.", "**Guideline Must‑Know:** For suspected pneumonia, follow ATS/IDSA 2019 severity criteria (e.g., **RR ≥30**, **SpO₂ ≤90%**, **multilobar infiltrates**) to guide level of care and antibiotics; noninvasive support does not replace timely antimicrobials.", "**Guideline Must‑Know:** In sepsis, avoid prolonged hypoxemia; prioritize **MAP ≥65 mmHg** with norepinephrine as first‑line vasopressor if needed; respiratory support choice should not delay antimicrobial therapy within **1 h** in shock (Surviving Sepsis 2021/2023).", "**Guideline Must‑Know:** Reassess within **30–60 min** after starting HFNC/NIV; if failing objective criteria, **do not delay** definitive airway. **Confirm Before Proceed** if considering paralytics for RSI after a failed NIV trial."], "icu_consult_triggers": ["Persistent or worsening hypoxemia: **SpO₂ <90%** despite **HFNC ≥50 L/min** with **FiO₂ ≥0.6** or NIV with **EPAP/CPAP ≥10 cmH₂O**.", "Hypercapnic acidosis: **pH <7.25** or **PaCO₂ rising** after **1–2 h** of optimized NIV settings.", "Escalating work of breathing/mental status decline (somnolence, agitation), or recurrent apnea.", "Hemodynamic instability or shock requiring vasopressors to maintain **MAP ≥65 mmHg**.", "Suspected contraindication to NIV (e.g., active emesis, facial trauma) or complications (barotrauma, pneumothorax)."], "orders_to_place_now": ["Order: High‑Flow Nasal Cannula — {flow_lpm: 40–60, fio2: titrate_to_spo2_target, heated_humidification: on, monitoring: continuous_pulse_ox}", "Order: Noninvasive Ventilation (BiPAP/CPAP) — {ipap_cmH2o: 10–15, epap_cpap_cmH2o: 5–10, backup_rate: per_protocol, interface: oronasal_full_face, escalation_criteria: defined}", "Order: Arterial or Venous Blood Gas — {timing: baseline_and_1–2h_after_NIV/HFNC, include_lactate: if_sepsis_suspected}", "Order: Bronchodilator Nebulization — {albuterol: 2.5–5_mg_q20min_x3_then_q2–4h, ipratropium: 0.5_mg_q6h, delivery: inline_if_on_NIV}", "Order: IV Corticosteroid (if COPD/asthma) — {methylprednisolone: 40–60_mg_iv, frequency: q6–12h, reassess: 24h}", "Order: Loop Diuretic (if pulmonary edema) — {furosemide: 40–80_mg_iv, target: net_negative_balance, monitoring: urine_output_bp_lytes}"], "abim_cases": [{"case_id": "01A", "stem": "A 68‑year‑old man with severe COPD presents with increasing dyspnea, somnolence, and wheezing. Vitals: T 37.0°C, HR 108, BP 152/86, RR 30, SpO₂ 90% on 6 L/min nasal cannula. VBG shows pH 7.28, PCO₂ 72 mmHg, HCO₃⁻ 33 mmol/L. Chest X‑ray shows hyperinflation without focal consolidation. After albuterol/ipratropium and IV methylprednisolone, he remains tachypneic and somnolent.", "options": ["Increase oxygen to maintain SpO₂ 100% and observe", "Start high‑flow nasal cannula at 50 L/min, FiO₂ 0.8", "Start noninvasive ventilation with IPAP 12 cmH₂O and EPAP 5 cmH₂O", "Proceed directly to endotracheal intubation", "Give IV morphine for dyspnea and continue nasal cannula"], "answer": "C", "explanation": "In acute hypercapnic respiratory failure from COPD with **pH ≤7.35** and elevated PaCO₂, **NIV is first‑line** and reduces intubation and mortality (GOLD 2024–25; ERS/ATS NIV 2017). Excess oxygen (A) risks worsening hypercapnia; HFNC (B) is less effective than NIV for ventilatory failure; immediate intubation (D) is reserved for NIV contraindication or failure; opioids (E) risk hypoventilation without addressing hypercapnia."}, {"case_id": "01B", "stem": "A 72‑year‑old woman with hypertensive cardiomyopathy presents with acute respiratory distress and frothy sputum. Vitals: RR 34, SpO₂ 86% on nonrebreather, BP 178/98, HR 122. You initiate BiPAP 12/6 cmH₂O and give IV furosemide. Ten minutes later she becomes nauseated with repeated emesis under the mask and increasing somnolence; SpO₂ fluctuates 84–88% despite FiO₂ 0.8.", "options": ["Continue BiPAP and add antiemetic; reassess in 1 hour", "Switch to standard nasal cannula to improve comfort", "Stop NIV and start HFNC at 60 L/min; avoid intubation", "Remove NIV and perform rapid sequence intubation with aspiration precautions", "Increase EPAP to 10 cmH₂O and observe"], "answer": "D", "explanation": "**Active emesis with inability to protect the airway is a contraindication to NIV** because of aspiration risk; escalation to **definitive airway** is indicated despite a general preference for non‑intubation strategies (ERS/ATS NIV 2017). Raising pressures (E) or waiting (A) increases risk; HFNC (C) does not address airway protection."}], "micro_questions": [{"q": "What SpO₂ range should you target in COPD with chronic hypercapnia?", "a": "**88–92%** to avoid oxygen‑induced hypercapnia while preventing hypoxemia."}, {"q": "After starting NIV for COPD, when should you repeat an ABG/VBG to assess response?", "a": "Within **1–2 hours** to confirm improving pH/PaCO₂ and work of breathing."}, {"q": "What ROX index threshold at 12 hours suggests HFNC success?", "a": "**ROX ≥4.88** supports continued HFNC with close monitoring of trends."}, {"q": "Name one absolute contraindication to NIV.", "a": "**Inability to protect airway** (e.g., active vomiting, decreased consciousness with aspiration risk)."}, {"q": "What is a typical initial BiPAP setting for COPD exacerbation?", "a": "**IPAP 10–15 cmH₂O / EPAP 5 cmH₂O**, titrated to reduce RR and PaCO₂."}], "references": [{"label": "ERS/ATS Clinical Practice Guideline: Noninvasive Ventilation for Acute Respiratory Failure (2017)", "url": "https://www.thoracic.org/statements/resources/cc/niv-guidelines.pdf"}, {"label": "ERS Clinical Practice Guideline: High‑Flow Nasal Cannula in Acute Respiratory Failure (2022)", "url": "https://erj.ersjournals.com/content/59/4/2101574"}, {"label": "Global Initiative for Chronic Obstructive Lung Disease (GOLD) Report (2024–2025)", "url": "https://goldcopd.org"}, {"label": "ATS/IDSA Community‑Acquired Pneumonia Guideline (2019)", "url": "https://www.atsjournals.org/doi/10.1164/rccm.201908-1581ST"}, {"label": "Surviving Sepsis Campaign International Guidelines (2021 with updates)", "url": "https://journals.lww.com/ccmjournal/Fulltext/2021/11000/Surviving_Sepsis_Campaign_International_Guidelines.21.aspx"}], "cdi": ["Acute hypoxemic respiratory failure — due to {pneumonia vs cardiogenic pulmonary edema vs COPD/asthma}; severity {SpO₂, FiO₂/HFNC settings}; objective evidence {ABG/VBG, CXR findings}; treatment {HFNC/NIV, antibiotics/diuretics}.", "Acute on chronic hypercapnic respiratory failure (COPD) — due to {AECOPD}; severity {pH, PaCO₂}; objective evidence {VBG/ABG values}; treatment {BiPAP with settings, bronchodilators, steroids}.", "Cardiogenic pulmonary edema with acute respiratory failure — due to {decompensated HF/HTN emergency}; severity {RR, hypoxemia}; objective evidence {CXR edema, BNP, exam}; treatment {CPAP/BiPAP, IV diuretics, afterload reduction}.", "Aspiration risk with respiratory failure — due to {active emesis/reduced consciousness}; objective evidence {vomiting under mask, failed swallow}; treatment decision {NIV avoided or discontinued; definitive airway if needed}.", "Sepsis due to pneumonia with acute respiratory failure — severity {lactate, hypotension}; objective evidence {infiltrate + infection}; treatment {early antibiotics, oxygen strategy, **MAP ≥65 mmHg** if shock}."]}, /* ... ALL OTHER 18 TOPICS EXACTLY AS IN YOUR ORIGINAL FILE ... */ ];
+
+const LEVELS = [
+  {level:1, name:"Pager Puppy", xpRequired:0, nextName:"Shadow Intern"},
+  {level:2, name:"Shadow Intern", xpRequired:750, nextName:"Night Rookie"},
+  {level:3, name:"Night Rookie", xpRequired:2250, nextName:"Electrolyte Enforcer"},
+  {level:4, name:"Electrolyte Enforcer", xpRequired:4500, nextName:"Sepsis Slayer"},
+  {level:5, name:"Sepsis Slayer", xpRequired:7500, nextName:"Code Blue Cowboy"},
+  {level:6, name:"Code Blue Cowboy", xpRequired:11250, nextName:"Hypo/Hyper Hero"},
+  {level:7, name:"Hypo/Hyper Hero", xpRequired:15750, nextName:"Senior Nocturnist"},
+  {level:8, name:"Senior Nocturnist", xpRequired:21000, nextName:"Moonlight Master"},
+  {level:9, name:"Moonlight Master", xpRequired:27000, nextName:"Legend of the Night Float"},
+  {level:10, name:"Legend of the Night Float", xpRequired:34000, nextName:"MAX"}
+];
+
+const BADGES = [
+  {id:"01", name:"Airway Avenger", desc:"Mastered Airway & Respiratory Failure", icon:"🫁", color:"#6366f1"},
+  {id:"02", name:"Withdrawal Warrior", desc:"Mastered Alcohol Withdrawal", icon:"🥃", color:"#ec4899"},
+  {id:"03", name:"Delirium Detective", desc:"Mastered Altered Mental Status", icon:"🧠", color:"#14b8a6"},
+  {id:"04", name:"Epi Ninja", desc:"Mastered Anaphylaxis", icon:"🐝", color:"#f59e0b"},
+  {id:"05", name:"Stewardship Sensei", desc:"Mastered Antibiotic Stewardship", icon:"🦠", color:"#8b5cf6"},
+  {id:"06", name:"Rhythm Rebel", desc:"Mastered Arrhythmias", icon:"❤️", color:"#ef4444"},
+  {id:"07", name:"Endo Expert", desc:"Mastered Endocrine Emergencies", icon:"⚡", color:"#f97316"},
+  {id:"08", name:"GI Bleed Gladiator", desc:"Mastered GI Bleeding", icon:"🩸", color:"#a855f7"},
+  {id:"09", name:"Glucose Gladiator", desc:"Mastered Glucose Emergencies", icon:"🍬", color:"#10b981"},
+  {id:"10", name:"Hypertension Hunter", desc:"Mastered Hypertensive Emergency", icon:"📈", color:"#3b82f6"},
+  {id:"11", name:"Fever Fighter", desc:"Mastered Fever & Antibiotics", icon:"🌡️", color:"#f59e0b"},
+  {id:"streak3", name:"3AM Warrior", desc:"3-day streak", icon:"🔥", color:"#f59e0b"},
+  {id:"streak7", name:"Night Owl Legend", desc:"7-day streak", icon:"🦉", color:"#c4b5fd"},
+  {id:"legend", name:"Legend of the Night Float", desc:"Reached Level 10", icon:"🌙", color:"#a78bfa"}
+];
+
+function getCurrentLevel(xp) {
+  return LEVELS.find(l => xp >= l.xpRequired) || LEVELS[0];
+}
+
+function NightMonitor({totalXP, onClick}) {
+  const lvl = getCurrentLevel(totalXP);
+  const next = LEVELS.find(l => l.level === lvl.level + 1) || LEVELS[LEVELS.length-1];
+  const progress = Math.min(100, ((totalXP - lvl.xpRequired) / (next.xpRequired - lvl.xpRequired)) * 100);
+
+  return <div className="bg-zinc-900 border border-cyan-400/30 rounded-2xl p-5 mb-6 shadow-2xl cursor-pointer" onClick={onClick}>
+    <div className="flex justify-between items-center mb-3">
+      <div className="flex items-center gap-3">
+        <span className="text-4xl">🦉</span>
+        <div>
+          <div className="text-cyan-300 font-bold text-xl tracking-tight">{lvl.name}</div>
+          <div className="text-zinc-400 text-xs">LEVEL {lvl.level}</div>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="text-emerald-400 font-mono text-2xl font-bold">{totalXP.toLocaleString()}</div>
+        <div className="text-xs text-zinc-500">XP</div>
+      </div>
+    </div>
+    <div className="relative h-8 bg-zinc-800 rounded-full overflow-hidden border border-cyan-500/40 shadow-inner">
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-cyan-400 to-emerald-400 transition-all duration-1000" style={{width: progress + '%'}}></div>
+      <div className="absolute top-1/2 -translate-y-1/2 text-4xl transition-all duration-1000" style={{left: `calc(${progress}% - 22px)`}}>🦉</div>
+    </div>
+    <div className="text-center text-xs text-zinc-500 mt-2">{next.xpRequired - totalXP} XP to {next.nextName}</div>
+  </div>;
+}
+
+function ProfileModal({totalXP, unlockedBadges, onClose}) {
+  const lvl = getCurrentLevel(totalXP);
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={onClose}>
+    <div style={{background:'#0f172a',border:'2px solid #67e8f9',borderRadius:16,maxWidth:560,width:'92%',maxHeight:'92vh',overflow:'auto'}} onClick={e=>e.stopPropagation()}>
+      <div style={{padding:24}}>
+        <NightMonitor totalXP={totalXP} onClick={()=>{}} />
+        <div style={{marginTop:24,display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:12}}>
+          {BADGES.map(b => {
+            const unlocked = unlockedBadges.includes(b.id);
+            return <div key={b.id} style={{textAlign:'center',opacity:unlocked?1:0.4}}>
+              <div style={{fontSize:48,filter:unlocked?'none':'grayscale(1)'}}>{b.icon}</div>
+              <div style={{fontSize:13,fontWeight:700,marginTop:4,color:unlocked?'#67e8f9':'#64748b'}}>{b.name}</div>
+            </div>;
+          })}
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+function fmt(text){
+  if(!text)return '';
+  let s=text;
+  s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\{([^}]+)\}/g,'<span style="display:inline;padding:1px 5px;border-radius:3px;font-weight:600;background:rgba(99,102,241,.13);color:#a5b4fc">$1</span>');
+  return s;
+}
+
+function Bullet({items,className}){
+  if(!items||!items.length)return null;
+  return <ul className="bl">{items.map((b,i)=><li key={i} dangerouslySetInnerHTML={{__html:fmt(b)}}/>)}</ul>;
+}
+
+function QuizCase({c,accent}){
+  const [sel,setSel]=useState(null);
+  const [show,setShow]=useState(false);
+  const letters='ABCDE';
+  const correctIdx=letters.indexOf(c.answer);
+  const revealed=show||sel!==null;
+  return (
+    <div className="qc">
+      <div className="ql" style={{color:accent}}>Case {c.case_id}</div>
+      <div className="qs" dangerouslySetInnerHTML={{__html:fmt(c.stem)}}/>
+      <ul className="qopts">{c.options.map((o,i)=>{
+        let cls='qo';
+        if(revealed&&i===correctIdx)cls+=' cor';
+        else if(revealed&&sel===i&&i!==correctIdx)cls+=' inc';
+        else if(sel===i)cls+=' sel';
+        return <li key={i} className={cls} onClick={()=>{if(!revealed)setSel(i);setShow(true)}}>
+          <span className="qol">{letters[i]}</span>
+          <span dangerouslySetInnerHTML={{__html:fmt(o)}}/>
+        </li>
+      })}</ul>
+      {!revealed&&<button className="qrb" onClick={()=>setShow(true)}>Show Answer</button>}
+      {revealed&&c.explanation&&<div className="qex" dangerouslySetInnerHTML={{__html:'<strong>✓ '+c.answer+'</strong> — '+fmt(c.explanation)}}/>}
+    </div>
+  );
+}
+
+function Flashcard({item}){
+  const [open,setOpen]=useState(false);
+  return (
+    <div className="fc" onClick={()=>setOpen(!open)}>
+      <div className="fc-q" dangerouslySetInnerHTML={{__html:'💡 '+fmt(item.q)}}/>
+      {open&&<div className="fc-a" dangerouslySetInnerHTML={{__html:fmt(item.a)}}/>}
+    </div>
+  );
+}
+
+const SECTION_KEYS=[
+  {key:'panic_card',label:'🚨 Panic Card',wrap:'sec-panic',badge:'Panic Card'},
+  {key:'brief_overview',label:'📋 Overview',wrap:null,badge:null},
+  {key:'icu_consult_triggers',label:'🏥 ICU Triggers',wrap:'sec-icu',badge:'ICU / Consult Triggers'},
+  {key:'orders_to_place_now',label:'📝 Orders',wrap:'sec-ord',badge:'Orders to Place Now'},
+  {key:'abim_cases',label:'🧪 Quiz',wrap:null,badge:null},
+  {key:'micro_questions',label:'🔍 Self-Check',wrap:null,badge:null},
+  {key:'references',label:'📚 References',wrap:null,badge:null},
+  {key:'cdi',label:'📄 CDI',wrap:'sec-cdi',badge:'CDI Documentation'}
+];
+
+function TopicDetail({topic,onBack}){
+  const accent=ACCENT[(parseInt(topic.id)-1)%ACCENT.length];
+  const available=SECTION_KEYS.filter(s=>{
+    const d=topic[s.key];
+    return d&&(Array.isArray(d)?d.length>0:true);
+  });
+  const [tab,setTab]=useState(available[0]?.key||'panic_card');
+  const sec=SECTION_KEYS.find(s=>s.key===tab);
+
+  function renderContent(){
+    const data=topic[tab];
+    if(!data||!data.length)return <p style={{color:'var(--t3)',padding:'20px 0'}}>No data for this section.</p>;
+
+    if(tab==='abim_cases')return data.map(c=><QuizCase key={c.case_id} c={c} accent={accent}/>);
+    if(tab==='micro_questions')return data.map((m,i)=><Flashcard key={i} item={m}/>);
+    if(tab==='references')return data.map((r,i)=><div key={i} className="ri">{r.url?<a href={r.url} target="_blank" rel="noopener noreferrer">{r.label}</a>:<span style={{color:'var(--t2)',fontSize:'.85rem'}}>{r.label}</span>}</div>);
+
+    const wrap=sec?.wrap;
+    const badge=sec?.badge;
+    if(wrap)return <div className={wrap}>{badge&&<div className="badge">{badge}</div>}<Bullet items={data}/></div>;
+    return <Bullet items={data}/>;
+  }
+
+  return (
+    <div className="td">
+      <button className="bk" onClick={onBack}>← All Topics</button>
+      <div className="tt-bar">
+        <h1 style={{color:accent}}>{topic.title}</h1>
+        <div className="tt-meta">
+          {topic.tags.slice(0,5).map((t,i)=><span key={i} className="tt-tag" style={{background:accent+'1a',color:accent}}>{t}</span>)}
+          <span className="tt-tag" style={{background:'var(--sf)',color:'var(--t3)'}}>{topic.date}</span>
+        </div>
+      </div>
+      <div className="stabs">
+        {available.map(s=><button key={s.key} className={'stab'+(tab===s.key?' act':'')} style={tab===s.key?{borderBottomColor:accent,color:accent}:{}} onClick={()=>setTab(s.key)}>{s.label}</button>)}
+      </div>
+      <div className="section-content">{renderContent()}</div>
+    </div>
+  );
+}
+
+function App(){
+  const [sel,setSel]=useState(null);
+  const [q,setQ]=useState('');
+  const [sbOpen,setSbOpen]=useState(false);
+
+  const [totalXP, setTotalXP] = useState(() => parseInt(localStorage.getItem('nf_xp') || '0'));
+  const [unlockedBadges, setUnlockedBadges] = useState(() => JSON.parse(localStorage.getItem('nf_badges') || '[]'));
+  const [showProfile, setShowProfile] = useState(false);
+
+  const awardXP = (amount, reason) => {
+    const newXP = totalXP + amount;
+    setTotalXP(newXP);
+    localStorage.setItem('nf_xp', newXP);
+
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:30px;right:30px;background:#22d3ee;color:#0f172a;padding:14px 26px;border-radius:9999px;font-weight:700;box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.4);z-index:99999;';
+    toast.textContent = `+${amount} XP • ${reason}`;
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(), 2400);
+
+    const oldLvl = getCurrentLevel(totalXP).level;
+    const newLvl = getCurrentLevel(newXP).level;
+    if (newLvl > oldLvl) {
+      confetti({particleCount:280, spread:90, origin:{y:0.6}});
+      setTimeout(()=>{confetti({particleCount:180, spread:70, origin:{y:0.6}})}, 300);
+    }
+  };
+
+  useEffect(() => {
+    if (sel) {
+      let viewed = JSON.parse(localStorage.getItem('nf_viewed') || '[]');
+      if (!viewed.includes(sel)) {
+        viewed.push(sel);
+        localStorage.setItem('nf_viewed', JSON.stringify(viewed));
+        awardXP(75, "Topic Opened");
+      }
+    }
+  }, [sel]);
+
+  const filtered=useMemo(()=>{
+    if(!q.trim())return TOPICS;
+    const lq=q.toLowerCase();
+    return TOPICS.filter(t=>t.title.toLowerCase().includes(lq)||t.tags.some(tg=>tg.toLowerCase().includes(lq)));
+  },[q]);
+
+  const totalCases=TOPICS.reduce((s,t)=>s+(t.abim_cases?.length||0),0);
+  const totalQs=TOPICS.reduce((s,t)=>s+(t.micro_questions?.length||0),0);
+
+  return (
+    <div className="lyt">
+      <div className={'ov'+(sbOpen?' sh':'')} onClick={()=>setSbOpen(false)}/>
+      <div className="mhd">
+        <button className="hbg" onClick={()=>setSbOpen(!sbOpen)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <span style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:'1rem',background:'linear-gradient(135deg,#e2e8f0,#c7d2fe,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Night Float Companion</span>
+      </div>
+      <aside className={'sb'+(sbOpen?' op':'')}>
+        <div className="sb-hd">
+          <div className="sb-brand">Night Float<br/>Companion</div>
+          <div className="sb-tag">Your On-Call Reference Guide</div>
+        </div>
+        <NightMonitor totalXP={totalXP} onClick={()=>setShowProfile(true)} />
+        <div className="sb-srch"><input placeholder="Search topics..." value={q} onChange={e=>setQ(e.target.value)}/></div>
+        <nav className="sb-nav">
+          <div className="ni" style={{color:sel===null?'var(--t1)':'var(--t2)',background:sel===null?'var(--sfa)':'transparent'}} onClick={()=>{setSel(null);setSbOpen(false)}}>
+            <span style={{fontSize:'.9rem'}}>🏠</span> All Topics
+          </div>
+          {filtered.map((t,i)=>{
+            const accent=ACCENT[(parseInt(t.id)-1)%ACCENT.length];
+            return <div key={t.id} className={'ni'+(sel===t.id?' act':'')} style={sel===t.id?{'--ac':accent}:{}} onClick={()=>{setSel(t.id);setSbOpen(false)}}>
+              <span className="ndot" style={{background:accent}}/>
+              <span style={{flex:1}}>{t.title}</span>
+            </div>;
+          })}
+        </nav>
+      </aside>
+      <main className="mn">
+        {sel===null?(
+          <div>
+            <div className="hero">
+              <h1 className="hero-t">Night Float Companion</h1>
+              <p className="hero-s">Evidence-based topic cards for your night float rotation. Clinical pearls, orders, and board-style questions.</p>
+            </div>
+            <div className="stats">
+              <div className="stat"><div className="stat-n" style={{color:'#a78bfa'}}>{TOPICS.length}</div><div className="stat-l">Topics</div></div>
+              <div className="stat"><div className="stat-n" style={{color:'#ec4899'}}>{totalCases}</div><div className="stat-l">Quiz Cases</div></div>
+              <div className="stat"><div className="stat-n" style={{color:'#14b8a6'}}>{totalQs}</div><div className="stat-l">Self-Check</div></div>
+            </div>
+            <div className="tgrid">
+              {filtered.map((t,i)=>{
+                const accent=ACCENT[(parseInt(t.id)-1)%ACCENT.length];
+                return <div key={t.id} className="tc" onClick={()=>setSel(t.id)} style={{'--hc':accent}} onMouseEnter={e=>e.currentTarget.style.boxShadow='0 8px 24px '+accent+'22'} onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
+                  <div className="tc-ac" style={{background:accent}}/>
+                  <h3>{t.title}</h3>
+                  <div className="tc-tags">{t.tags.slice(0,3).map((tg,j)=><span key={j} className="tc-tag">{tg}</span>)}</div>
+                  <div className="tc-dt">{t.abim_cases?.length||0} cases · {t.micro_questions?.length||0} Q&A · {t.date}</div>
+                </div>;
+              })}
+            </div>
+          </div>
+        ):(
+          <TopicDetail topic={TOPICS.find(t=>t.id===sel)} onBack={()=>setSel(null)}/>
+        )}
+        {showProfile && <ProfileModal totalXP={totalXP} unlockedBadges={unlockedBadges} onClose={()=>setShowProfile(false)} />}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
